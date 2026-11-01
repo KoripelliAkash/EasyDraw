@@ -160,16 +160,6 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 🎨 Design Philosophy
-
-`easydraw` deliberately avoids the overused "AI-generated SaaS" aesthetic:
-- **No purple-cyan gradient meshes or glassmorphism**: We prioritize contrast, focus, and visual clarity.
-- **Restrained Elevation**: Subtle 1px borders (`#e2e8f0` / `#262938`) and flat surfaces instead of heavy drop shadows.
-- **Typography-First**: Built with Inter and JetBrains Mono for clean typographic hierarchy.
-- **Product-First Feel**: Designed to feel like a high-craft utility (similar to Linear, Notion, or Obsidian).
-
----
-
 ## 📄 License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
