@@ -39,6 +39,7 @@ export const STORAGE_KEYS = {
   FLOWS: 'easydraw:flows',
   THEME: 'easydraw:theme',
   SCENE_PREFIX: 'easydraw:scene:',
+  LIBRARY: 'easydraw:library',
 };
 
 export const THEMES = {

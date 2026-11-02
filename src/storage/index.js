@@ -129,6 +129,72 @@ export const clearAllScenes = async () => {
 };
 
 /* ==========================================================================
+   Excalidraw Library Storage & Adapter
+   ========================================================================== */
+
+/**
+ * Retrieve saved library items from localStorage / IndexedDB
+ * @returns {Promise<{ libraryItems: Array } | null>}
+ */
+export const getLibraryData = async () => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.LIBRARY);
+    if (raw) {
+      return JSON.parse(raw);
+    }
+  } catch (e) {
+    // Fallback to IndexedDB
+  }
+
+  try {
+    const db = await getDatabase();
+    const data = await db.get(SCENES_STORE, STORAGE_KEYS.LIBRARY);
+    if (data) {
+      return data;
+    }
+  } catch (e) {
+    console.warn('Failed to load library items from IndexedDB:', e);
+  }
+
+  return { libraryItems: [] };
+};
+
+/**
+ * Persist library items to both localStorage (quick cache) and IndexedDB (durable)
+ * @param {{ libraryItems: Array }} libraryData
+ */
+export const saveLibraryData = async (libraryData) => {
+  const sanitized = {
+    libraryItems: Array.isArray(libraryData?.libraryItems) ? libraryData.libraryItems : [],
+  };
+
+  try {
+    localStorage.setItem(STORAGE_KEYS.LIBRARY, JSON.stringify(sanitized));
+  } catch (e) {
+    console.warn('localStorage quota exceeded when saving library, saving to IndexedDB only:', e);
+  }
+
+  try {
+    const db = await getDatabase();
+    await db.put(SCENES_STORE, sanitized, STORAGE_KEYS.LIBRARY);
+  } catch (e) {
+    console.error('Failed to save library data to IndexedDB:', e);
+  }
+};
+
+/**
+ * Excalidraw LibraryPersistenceAdapter compliant object
+ */
+export const libraryAdapter = {
+  load: async () => {
+    return await getLibraryData();
+  },
+  save: async (libraryData) => {
+    await saveLibraryData(libraryData);
+  },
+};
+
+/* ==========================================================================
    LocalStorage Helpers for Folders & Flows
    ========================================================================== */
 
@@ -372,6 +438,7 @@ export const exportWorkspace = async () => {
   const folders = getFolders();
   const flows = getFlows();
   const scenes = await getAllScenes();
+  const library = await getLibraryData();
 
   return {
     version: 1,
@@ -380,6 +447,7 @@ export const exportWorkspace = async () => {
     folders,
     flows,
     scenes,
+    library: library?.libraryItems || [],
   };
 };
 
@@ -404,6 +472,9 @@ export const importWorkspace = async (data, mode = 'merge') => {
     await clearAllScenes();
     if (data.scenes) {
       await saveAllScenes(data.scenes);
+    }
+    if (Array.isArray(data.library)) {
+      await saveLibraryData({ libraryItems: data.library });
     }
   } else {
     // Merge mode: append non-existing or create with fresh IDs
@@ -431,6 +502,19 @@ export const importWorkspace = async (data, mode = 'merge') => {
 
     if (data.scenes) {
       await saveAllScenes(data.scenes);
+    }
+
+    if (Array.isArray(data.library) && data.library.length > 0) {
+      const existing = await getLibraryData();
+      const existingItems = existing?.libraryItems || [];
+      const existingIds = new Set(existingItems.map((item) => item.id));
+      const combined = [...existingItems];
+      for (const item of data.library) {
+        if (!existingIds.has(item.id)) {
+          combined.push(item);
+        }
+      }
+      await saveLibraryData({ libraryItems: combined });
     }
   }
 };

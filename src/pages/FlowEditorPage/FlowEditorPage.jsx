@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Excalidraw, exportToBlob, exportToSvg } from '@excalidraw/excalidraw';
+import { Excalidraw, exportToBlob, exportToSvg, useHandleLibrary } from '@excalidraw/excalidraw';
 import {
   ArrowLeft,
   Download,
@@ -14,11 +14,18 @@ import {
   Sun,
   Moon,
   Trash2,
+  Library as LibraryIcon,
 } from 'lucide-react';
 import { useWorkspace } from '../../context/useWorkspace.js';
 import { useTheme } from '../../context/useTheme.js';
-import { getScene, saveScene, updateFlowTimestamp } from '../../storage/index.js';
+import {
+  getScene,
+  saveScene,
+  updateFlowTimestamp,
+  libraryAdapter,
+} from '../../storage/index.js';
 import { THEMES } from '../../types/index.js';
+import { LibraryBrowserModal } from '../../components/Modals/LibraryBrowserModal.jsx';
 import styles from './FlowEditorPage.module.css';
 
 export const FlowEditorPage = () => {
@@ -40,6 +47,9 @@ export const FlowEditorPage = () => {
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [titleEditing, setTitleEditing] = useState(false);
   const [titleValue, setTitleValue] = useState(flow?.name || '');
+  const [excalidrawAPI, setExcalidrawAPI] = useState(null);
+  const [isLibraryModalOpen, setIsLibraryModalOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState(null);
 
   const excalidrawAPIRef = useRef(null);
   const isLoadedRef = useRef(false);
@@ -72,6 +82,32 @@ export const FlowEditorPage = () => {
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [exportMenuOpen]);
+
+  /* ==========================================================================
+     Excalidraw Library Management & Cross-session Sync
+     ========================================================================== */
+  useHandleLibrary({
+    excalidrawAPI,
+    adapter: libraryAdapter,
+  });
+
+  // Intercept clicking "Browse libraries" in Excalidraw's built-in library menu
+  // so the user stays in the same tab in our in-app modal
+  useEffect(() => {
+    const handleInterceptBrowseLibraries = (e) => {
+      const browseBtn = e.target.closest?.('.library-menu-browse-button');
+      if (browseBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsLibraryModalOpen(true);
+      }
+    };
+
+    document.addEventListener('click', handleInterceptBrowseLibraries, true);
+    return () => {
+      document.removeEventListener('click', handleInterceptBrowseLibraries, true);
+    };
+  }, []);
 
   /* ==========================================================================
      CRITICAL: Lazy load saved scene ONCE on mount
@@ -431,6 +467,17 @@ export const FlowEditorPage = () => {
             )}
           </div>
 
+          {/* In-App Library Browser */}
+          <button
+            type="button"
+            className={styles.topBtn}
+            onClick={() => setIsLibraryModalOpen(true)}
+            title="Browse and add Excalidraw libraries"
+          >
+            <LibraryIcon size={14} />
+            <span>Libraries</span>
+          </button>
+
           {/* Import file into current scene */}
           <input
             type="file"
@@ -546,7 +593,13 @@ export const FlowEditorPage = () => {
             <Excalidraw
               excalidrawAPI={(api) => {
                 excalidrawAPIRef.current = api;
+                setExcalidrawAPI(api);
               }}
+              libraryReturnUrl={
+                typeof window !== 'undefined'
+                  ? `${window.location.origin}/flow/${flowId}`
+                  : undefined
+              }
               initialData={initialScene}
               onChange={handleCanvasChange}
               theme={resolvedTheme}
@@ -562,6 +615,27 @@ export const FlowEditorPage = () => {
           </div>
         )}
       </main>
+
+      {/* In-app Library Browser Modal */}
+      <LibraryBrowserModal
+        isOpen={isLibraryModalOpen}
+        onClose={() => setIsLibraryModalOpen(false)}
+        flowId={flowId}
+        excalidrawAPI={excalidrawAPI}
+        resolvedTheme={resolvedTheme}
+        onNotification={(msg) => {
+          setToastMessage(msg);
+          setTimeout(() => setToastMessage(null), 3500);
+        }}
+      />
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className={styles.toast} role="status">
+          <Check size={16} className={styles.toastSuccessIcon} />
+          <span>{toastMessage}</span>
+        </div>
+      )}
     </div>
   );
 };
