@@ -160,6 +160,12 @@
   color: #ffffff;
 }
 
+.deleteTopBtn:hover {
+  background-color: var(--danger-subtle);
+  border-color: var(--danger-border);
+  color: var(--danger);
+}
+
 .dropdownContainer {
   position: relative;
 }

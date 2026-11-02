@@ -37,7 +37,7 @@ export const FolderCard = ({ folder, itemCount = 0, onRename, onMove, onDelete }
 
   return (
     <div
-      className={styles.card}
+      className={`${styles.card} ${menuOpen ? styles.cardActive : ''}`}
       onClick={() => navigate(`/folder/${folder.id}`)}
       role="button"
       tabIndex={0}

@@ -13,6 +13,7 @@ import {
   ChevronDown,
   Sun,
   Moon,
+  Trash2,
 } from 'lucide-react';
 import { useWorkspace } from '../../context/useWorkspace.js';
 import { useTheme } from '../../context/useTheme.js';
@@ -23,7 +24,7 @@ import styles from './FlowEditorPage.module.css';
 export const FlowEditorPage = () => {
   const { flowId } = useParams();
   const navigate = useNavigate();
-  const { flows, folders, editFlow } = useWorkspace();
+  const { flows, folders, editFlow, removeFlow } = useWorkspace();
   const { theme, resolvedTheme, setTheme } = useTheme();
 
   // Active Flow metadata
@@ -344,6 +345,20 @@ export const FlowEditorPage = () => {
     reader.readAsText(file);
   };
 
+  const handleDeleteFlow = () => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${flow?.name || 'this diagram'}"? This action cannot be undone.`
+    );
+    if (confirmed) {
+      removeFlow(flowId);
+      if (flow?.parentId && flow.parentId !== 'root') {
+        navigate(`/folder/${flow.parentId}`);
+      } else {
+        navigate('/');
+      }
+    }
+  };
+
   return (
     <div className={styles.editorContainer}>
       {/* Top Bar Chrome */}
@@ -485,6 +500,17 @@ export const FlowEditorPage = () => {
               </div>
             )}
           </div>
+
+          {/* Delete Diagram */}
+          <button
+            type="button"
+            className={`${styles.topBtn} ${styles.deleteTopBtn}`}
+            onClick={handleDeleteFlow}
+            title="Delete this diagram"
+            aria-label="Delete diagram"
+          >
+            <Trash2 size={14} />
+          </button>
 
           {/* Theme Quick Switcher */}
           <div className={styles.themeToggleGroup}>

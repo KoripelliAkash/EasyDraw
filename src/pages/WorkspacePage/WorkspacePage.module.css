@@ -76,8 +76,16 @@
 .pageHeader {
   display: flex;
   align-items: baseline;
+  justify-content: space-between;
   gap: var(--space-3);
   margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.pageTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
 }
 
 .pageTitle {
@@ -85,6 +93,36 @@
   font-weight: 700;
   color: var(--text-primary);
   letter-spacing: -0.4px;
+}
+
+.folderActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.iconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-default);
+  background-color: var(--bg-surface);
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.iconBtn:hover {
+  background-color: var(--bg-surface-hover);
+  color: var(--text-primary);
+}
+
+.iconBtnDanger:hover {
+  background-color: var(--danger-subtle);
+  border-color: var(--danger-border);
+  color: var(--danger);
 }
 
 .itemCountText {

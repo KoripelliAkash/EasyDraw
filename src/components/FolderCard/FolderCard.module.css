@@ -18,6 +18,10 @@
   box-shadow: var(--shadow-subtle);
 }
 
+.cardActive {
+  z-index: 50;
+}
+
 .topRow {
   display: flex;
   align-items: flex-start;

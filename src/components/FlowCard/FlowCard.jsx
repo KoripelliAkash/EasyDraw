@@ -74,7 +74,7 @@ export const FlowCard = ({ flow, onRename, onMove, onDelete }) => {
 
   return (
     <div
-      className={styles.card}
+      className={`${styles.card} ${menuOpen ? styles.cardActive : ''}`}
       onClick={() => navigate(`/flow/${flow.id}`)}
       role="button"
       tabIndex={0}

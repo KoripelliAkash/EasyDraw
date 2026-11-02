@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FolderPlus, Plus, Upload, Folder as FolderIcon, LayoutGrid } from 'lucide-react';
+import { FolderPlus, Plus, Upload, Folder as FolderIcon, LayoutGrid, Edit2, Trash2 } from 'lucide-react';
 import { useWorkspace } from '../../context/useWorkspace.js';
 import { getFolderAncestors } from '../../storage/index.js';
 import { Breadcrumbs } from '../../components/Breadcrumbs/Breadcrumbs.jsx';
@@ -156,9 +156,33 @@ export const WorkspacePage = () => {
       <div className={styles.content}>
         {/* Title Heading */}
         <div className={styles.pageHeader}>
-          <h2 className={styles.pageTitle}>
-            {currentFolder ? currentFolder.name : 'Workspace'}
-          </h2>
+          <div className={styles.pageTitleGroup}>
+            <h2 className={styles.pageTitle}>
+              {currentFolder ? currentFolder.name : 'Workspace'}
+            </h2>
+            {currentFolder && (
+              <div className={styles.folderActions}>
+                <button
+                  type="button"
+                  className={styles.iconBtn}
+                  onClick={() => setRenameItem({ ...currentFolder, isFolder: true })}
+                  title="Rename this folder"
+                  aria-label="Rename folder"
+                >
+                  <Edit2 size={15} />
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                  onClick={() => setDeleteItem({ ...currentFolder, isFolder: true })}
+                  title="Delete this folder"
+                  aria-label="Delete folder"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            )}
+          </div>
           <span className={styles.itemCountText}>
             {currentSubfolders.length}{' '}
             {currentSubfolders.length === 1 ? 'folder' : 'folders'}, {currentFlows.length}{' '}
@@ -259,8 +283,18 @@ export const WorkspacePage = () => {
         isFolder={deleteItem?.isFolder}
         onClose={() => setDeleteItem(null)}
         onConfirm={(id) => {
-          if (deleteItem?.isFolder) removeFolder(id);
-          else removeFlow(id);
+          if (deleteItem?.isFolder) {
+            removeFolder(id);
+            if (currentFolder?.id === id) {
+              if (currentFolder.parentId && currentFolder.parentId !== 'root') {
+                navigate(`/folder/${currentFolder.parentId}`);
+              } else {
+                navigate('/');
+              }
+            }
+          } else {
+            removeFlow(id);
+          }
         }}
       />
     </div>
