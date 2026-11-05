@@ -1,3 +1,4 @@
+import { sound } from '../../utils/audio.js';
 import styles from './EmptyState.module.css';
 
 export const EmptyState = ({
@@ -12,14 +13,22 @@ export const EmptyState = ({
   return (
     <div className={styles.emptyContainer}>
       <div className={styles.iconCircle}>
-        <Icon size={24} className={styles.icon} />
+        <Icon size={20} className={styles.icon} />
       </div>
+      <span className={styles.schematicBadge}>[DRAFTING CANVASES]</span>
       <h3 className={styles.title}>{title}</h3>
       <p className={styles.description}>{description}</p>
       {(actionLabel || secondaryActionLabel) && (
         <div className={styles.actionRow}>
           {actionLabel && (
-            <button type="button" className={styles.primaryBtn} onClick={onAction}>
+            <button
+              type="button"
+              className={styles.primaryBtn}
+              onClick={() => {
+                sound.playClick();
+                onAction();
+              }}
+            >
               {actionLabel}
             </button>
           )}
@@ -27,7 +36,10 @@ export const EmptyState = ({
             <button
               type="button"
               className={styles.secondaryBtn}
-              onClick={onSecondaryAction}
+              onClick={() => {
+                sound.playClick();
+                onSecondaryAction();
+              }}
             >
               {secondaryActionLabel}
             </button>

@@ -1,11 +1,14 @@
-/* Design Tokens & Global CSS for easydraw */
-:root {
-  --font-sans:
-    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial,
-    sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+/* ==========================================================================
+   EasyDraw Design System: Industrial Studio & Engineering Blueprint
+   Ultra-tactile, high-density, mechanical design tokens & resets.
+   ========================================================================== */
 
-  /* Spacing Scale */
+:root {
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Strict Spatial Tokens */
+  --space-05: 2px;
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -14,31 +17,33 @@
   --space-6: 24px;
   --space-8: 32px;
 
-  /* Radii - Subtle & intentional (not bubbly) */
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  /* Industrial Tactile Radii (Crisp, angular, mechanical) */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-pill: 9999px;
 
-  /* Transitions */
-  --transition-fast: 120ms ease;
-  --transition-normal: 180ms ease;
+  /* Micro-interactions: snappy mechanical response */
+  --transition-instant: 60ms cubic-bezier(0.2, 0, 0, 1);
+  --transition-fast: 110ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-normal: 160ms cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* Light Theme (Default) - Clean, restrained, neutral */
-  --bg-app: #fbfbfb;
+  /* Light Theme (Engineering Drafting Room) */
+  --bg-app: #f4f5f8;
   --bg-surface: #ffffff;
-  --bg-surface-hover: #f4f4f5;
-  --bg-surface-active: #e4e4e7;
-  --bg-subtle: #f8fafc;
-  --bg-muted: #f1f5f9;
+  --bg-surface-hover: #eceef3;
+  --bg-surface-active: #e2e5ec;
+  --bg-subtle: #f0f2f6;
+  --bg-muted: #e4e7ee;
 
-  --border-subtle: #f1f5f9;
-  --border-default: #e2e8f0;
-  --border-strong: #cbd5e1;
+  --border-subtle: #e8ebf2;
+  --border-default: #d3d7e3;
+  --border-strong: #a4adbf;
   --border-focus: #0f172a;
 
   --text-primary: #0f172a;
-  --text-secondary: #475569;
+  --text-secondary: #334155;
   --text-muted: #64748b;
   --text-faint: #94a3b8;
 
@@ -47,52 +52,99 @@
   --accent-subtle: #eff6ff;
   --accent-text: #1d4ed8;
 
-  --danger: #dc2626;
-  --danger-hover: #b91c1c;
-  --danger-subtle: #fef2f2;
-  --danger-border: #fecaca;
+  --status-emerald: #059669;
+  --status-amber: #d97706;
+  --status-rose: #dc2626;
 
-  --shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-dropdown:
-    0 4px 12px -2px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
-  --shadow-modal:
-    0 12px 32px -4px rgba(15, 23, 42, 0.12), 0 4px 12px -2px rgba(15, 23, 42, 0.06);
+  --canvas-grid-color: rgba(15, 23, 42, 0.035);
+  --canvas-bg: #ffffff;
+
+  /* Tactile Press Shadow */
+  --press-shadow: 0 1px 0 #a4adbf;
+  --hud-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.08), 0 0 0 1px var(--border-default);
 }
 
 [data-theme='dark'] {
-  --bg-app: #090a0f;
-  --bg-surface: #12131a;
-  --bg-surface-hover: #1a1c26;
-  --bg-surface-active: #222533;
-  --bg-subtle: #151722;
-  --bg-muted: #1e202e;
+  /* Industrial Titanium Dark (Default High-Craft) */
+  --bg-app: #0a0b0e;
+  --bg-surface: #111319;
+  --bg-surface-hover: #181a24;
+  --bg-surface-active: #202433;
+  --bg-subtle: #141620;
+  --bg-muted: #1e2230;
 
-  --border-subtle: #191b26;
-  --border-default: #262938;
-  --border-strong: #3b3f54;
-  --border-focus: #60a5fa;
+  --border-subtle: #191c28;
+  --border-default: #252838;
+  --border-strong: #3b4059;
+  --border-focus: #38bdf8;
 
   --text-primary: #f8fafc;
   --text-secondary: #cbd5e1;
-  --text-muted: #94a3b8;
-  --text-faint: #64748b;
+  --text-muted: #838ea5;
+  --text-faint: #4e576e;
 
-  --accent: #3b82f6;
-  --accent-hover: #60a5fa;
-  --accent-subtle: #1e293b;
-  --accent-text: #93c5fd;
+  --accent: #38bdf8;
+  --accent-hover: #7dd3fc;
+  --accent-subtle: #0c2338;
+  --accent-text: #bae6fd;
 
-  --danger: #ef4444;
-  --danger-hover: #f87171;
-  --danger-subtle: #2d1518;
-  --danger-border: #5c1d24;
+  --status-emerald: #10b981;
+  --status-amber: #f59e0b;
+  --status-rose: #f43f5e;
 
-  --shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
-  --shadow-dropdown: 0 4px 16px -2px rgba(0, 0, 0, 0.6);
-  --shadow-modal: 0 16px 36px -4px rgba(0, 0, 0, 0.7);
+  --canvas-grid-color: rgba(255, 255, 255, 0.025);
+  --canvas-bg: #000000;
+
+  --press-shadow: 0 1px 0 #3b4059;
+  --hud-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.7), 0 0 0 1px var(--border-default);
 }
 
-/* CSS Reset */
+/* ==========================================================================
+   Canvas Styles (Grid & No Grid)
+   ========================================================================== */
+
+/* 1. Grid Mode */
+[data-preset='grid'] {
+  --preset-canvas-bg: #000000;
+  --preset-grid: rgba(255, 255, 255, 0.035);
+  --preset-stroke: #f8fafc;
+  --preset-accent: #38bdf8;
+  --preset-border: #26293d;
+}
+
+[data-theme='light'] [data-preset='grid'],
+[data-preset='grid'][data-theme='light'] {
+  --preset-canvas-bg: #ffffff;
+  --preset-grid: rgba(15, 23, 42, 0.035);
+  --preset-stroke: #0f172a;
+  --preset-accent: #2563eb;
+  --preset-border: #cbd5e1;
+}
+
+/* 2. No Grid Mode */
+[data-preset='nogrid'],
+[data-preset='no-grid'] {
+  --preset-canvas-bg: #000000;
+  --preset-grid: transparent;
+  --preset-stroke: #f8fafc;
+  --preset-accent: #38bdf8;
+  --preset-border: #26293d;
+}
+
+[data-theme='light'] [data-preset='nogrid'],
+[data-theme='light'] [data-preset='no-grid'],
+[data-preset='nogrid'][data-theme='light'] {
+  --preset-canvas-bg: #ffffff;
+  --preset-grid: transparent;
+  --preset-stroke: #0f172a;
+  --preset-accent: #2563eb;
+  --preset-border: #e2e8f0;
+}
+
+/* ==========================================================================
+   Global Reset & Defaults
+   ========================================================================== */
+
 *,
 *::before,
 *::after {
@@ -107,54 +159,142 @@ body,
   width: 100%;
   height: 100%;
   overflow: hidden;
+  background-color: var(--bg-app);
 }
 
 body {
   font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.45;
   color: var(--text-primary);
-  background-color: var(--bg-app);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  user-select: none;
 }
 
-button,
-input,
-select,
-textarea {
-  font-family: inherit;
-  font-size: inherit;
+/* Monospace formatting with tabular numbers */
+code,
+kbd,
+pre,
+.font-mono {
+  font-family: var(--font-mono);
+  font-feature-settings: 'tnum' 1, 'zero' 1;
+}
+
+/* Mechanical Keycap Badge */
+.keycap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-xs);
+  line-height: 1;
+  text-transform: uppercase;
+  user-select: none;
+  transition: transform var(--transition-instant);
+}
+
+/* Tactile physical press state */
+.keycap:active,
+button:active .keycap {
+  transform: translateY(1px);
+  border-bottom-width: 1px;
+}
+
+/* Link Reset: remove browser default underlines */
+a,
+a:hover,
+a:focus,
+a:visited {
+  text-decoration: none;
   color: inherit;
 }
 
+/* Button Reset */
 :where(button:not(.excalidraw *)) {
   cursor: pointer;
   background: none;
   border: none;
-}
-
-button {
-  cursor: pointer;
-}
-
-a {
   color: inherit;
-  text-decoration: none;
+  font-family: inherit;
+  font-size: inherit;
 }
 
-/* Scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* High visibility outline for keyboard focus */
+:where(button:not(.excalidraw *):focus-visible),
+:where(input:focus-visible),
+:where(a:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
+
+/* Global scrollbars - ultra thin technical */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: var(--border-default);
-  border-radius: 3px;
+  border-radius: 2px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: var(--border-strong);
 }
+
+/* Engineering dot-matrix and grid background pattern */
+.bg-grid-dots {
+  background-image: radial-gradient(var(--border-strong) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+.bg-grid-lines {
+  background-size: 24px 24px;
+  background-image:
+    linear-gradient(to right, var(--canvas-grid-color) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--canvas-grid-color) 1px, transparent 1px);
+}
+
+/* Ensure Excalidraw library panel & sidebars stack above the Radar HUD */
+.excalidraw aside.sidebar,
+.excalidraw .sidebar,
+.excalidraw .layer-ui__library,
+.excalidraw .layer-ui__library-container,
+.excalidraw .layer-ui__wrapper {
+  z-index: 150 !important;
+}
+
+/* Ensure Excalidraw canvas container background matches active theme */
+[data-theme='dark'] .excalidraw {
+  --color-surface-lowest: #000000 !important;
+  background-color: #000000 !important;
+}
+
+[data-theme='dark'] .excalidraw .excalidraw__canvas-wrapper {
+  background-color: #000000 !important;
+}
+
+[data-theme='light'] .excalidraw {
+  --color-surface-lowest: #ffffff !important;
+  background-color: #ffffff !important;
+}
+
+[data-theme='light'] .excalidraw .excalidraw__canvas-wrapper {
+  background-color: #ffffff !important;
+}
+
+

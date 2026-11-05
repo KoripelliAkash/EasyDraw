@@ -8,11 +8,11 @@
 }
 
 .topBar {
-  height: 48px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--space-6);
+  padding: 0 16px;
   background-color: var(--bg-surface);
   border-bottom: 1px solid var(--border-default);
   flex-shrink: 0;
@@ -21,7 +21,7 @@
 .topActions {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 8px;
 }
 
 .hiddenInput {
@@ -29,29 +29,45 @@
 }
 
 .primaryBtn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
-  padding: 6px 12px;
-  font-size: 13px;
-  font-weight: 500;
+  gap: 6px;
+  padding: 5px 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
   border-radius: var(--radius-xs);
-  background-color: var(--accent);
-  color: #ffffff;
-  transition: background-color var(--transition-fast);
+  background-color: #38bdf8;
+  color: #08101e;
+  border: 1px solid transparent;
+  transition: all var(--transition-fast);
 }
 
 .primaryBtn:hover {
-  background-color: var(--accent-hover);
+  background-color: #7dd3fc;
+}
+
+.primaryBtn:active {
+  transform: translateY(1px);
+}
+
+[data-theme='light'] .primaryBtn {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+[data-theme='light'] .primaryBtn:hover {
+  background-color: #1d4ed8;
 }
 
 .secondaryBtn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
-  padding: 6px 12px;
-  font-size: 13px;
-  font-weight: 500;
+  gap: 6px;
+  padding: 5px 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
   border-radius: var(--radius-xs);
   background-color: var(--bg-surface);
   border: 1px solid var(--border-default);
@@ -62,34 +78,42 @@
 .secondaryBtn:hover {
   background-color: var(--bg-surface-hover);
   color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.secondaryBtn:active {
+  transform: translateY(1px);
 }
 
 .content {
   flex: 1;
   overflow-y: auto;
-  padding: var(--space-6);
-  max-width: 1200px;
+  padding: 24px 32px;
+  max-width: 1400px;
   width: 100%;
   margin: 0 auto;
 }
 
 .pageHeader {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
-  margin-bottom: var(--space-6);
+  gap: 12px;
+  margin-bottom: 24px;
   flex-wrap: wrap;
+  border-bottom: 1px solid var(--border-default);
+  padding-bottom: 14px;
 }
 
 .pageTitleGroup {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 12px;
 }
 
 .pageTitle {
-  font-size: 20px;
+  font-family: var(--font-mono);
+  font-size: 18px;
   font-weight: 700;
   color: var(--text-primary);
   letter-spacing: -0.4px;
@@ -101,56 +125,71 @@
   gap: 4px;
 }
 
-.iconBtn {
+.folderActionBtn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: var(--radius-xs);
   border: 1px solid var(--border-default);
   background-color: var(--bg-surface);
-  color: var(--text-secondary);
+  color: var(--text-muted);
   transition: all var(--transition-fast);
 }
 
-.iconBtn:hover {
+.folderActionBtn:hover {
   background-color: var(--bg-surface-hover);
   color: var(--text-primary);
+  border-color: var(--border-strong);
 }
 
-.iconBtnDanger:hover {
-  background-color: var(--danger-subtle);
-  border-color: var(--danger-border);
-  color: var(--danger);
+.folderActionBtn:active {
+  transform: translateY(1px);
 }
 
-.itemCountText {
-  font-size: 13px;
-  color: var(--text-muted);
+.deleteFolderBtn:hover {
+  background-color: var(--status-rose);
+  border-color: var(--status-rose);
+  color: #ffffff;
 }
 
 .section {
-  margin-bottom: var(--space-8);
+  margin-bottom: 32px;
 }
 
 .sectionTitle {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--text-faint);
   text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: var(--radius-xs);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-default);
   color: var(--text-muted);
-  margin-bottom: var(--space-3);
 }
 
 .folderGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
 }
 
 .flowGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: var(--space-4);
+  gap: 16px;
 }

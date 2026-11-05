@@ -1,6 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Excalidraw, exportToBlob, exportToSvg, useHandleLibrary } from '@excalidraw/excalidraw';
+import {
+  Excalidraw,
+  exportToBlob,
+  exportToSvg,
+  exportToClipboard,
+  useHandleLibrary,
+} from '@excalidraw/excalidraw';
 import {
   ArrowLeft,
   Download,
@@ -15,6 +21,10 @@ import {
   Moon,
   Trash2,
   Library as LibraryIcon,
+  Copy,
+  Command,
+  Grid,
+  Square,
 } from 'lucide-react';
 import { useWorkspace } from '../../context/useWorkspace.js';
 import { useTheme } from '../../context/useTheme.js';
@@ -26,7 +36,57 @@ import {
 } from '../../storage/index.js';
 import { THEMES } from '../../types/index.js';
 import { LibraryBrowserModal } from '../../components/Modals/LibraryBrowserModal.jsx';
+import { CommandPalette } from '../../components/CommandPalette/CommandPalette.jsx';
+import { Minimap } from '../../components/Minimap/Minimap.jsx';
+import { CanvasStatusBar } from '../../components/CanvasStatusBar/CanvasStatusBar.jsx';
+import { sound } from '../../utils/audio.js';
 import styles from './FlowEditorPage.module.css';
+
+const PRESET_CONFIGS = {
+  grid: {
+    label: 'Grid',
+    desc: 'Technical drafting grid',
+    hasGrid: true,
+  },
+  nogrid: {
+    label: 'No Grid',
+    desc: 'Clean blank canvas',
+    hasGrid: false,
+  },
+};
+
+const PRESETS = Object.entries(PRESET_CONFIGS).map(([id, cfg]) => ({
+  id,
+  label: cfg.label,
+  desc: cfg.desc,
+  hasGrid: cfg.hasGrid,
+}));
+
+const DEFAULT_DARK_BG = '#000000';
+const DEFAULT_LIGHT_BG = '#ffffff';
+
+/**
+ * Checks if a canvas background color is the default/neutral theme color.
+ * If the user has not changed to a custom color, it returns true so we match the active theme:
+ * black in dark mode, white in light mode.
+ */
+const isDefaultCanvasBg = (color) => {
+  if (!color || typeof color !== 'string') return true;
+  const c = color.trim().toLowerCase();
+  return (
+    c === '' ||
+    c === 'transparent' ||
+    c === '#000000' ||
+    c === '#000' ||
+    c === 'rgb(0,0,0)' ||
+    c === 'rgb(0, 0, 0)' ||
+    c === '#121212' ||
+    c === '#ffffff' ||
+    c === '#fff' ||
+    c === 'rgb(255,255,255)' ||
+    c === 'rgb(255, 255, 255)'
+  );
+};
 
 export const FlowEditorPage = () => {
   const { flowId } = useParams();
@@ -40,28 +100,55 @@ export const FlowEditorPage = () => {
   // Parent folder for back navigation
   const parentFolder = folders.find((f) => f.id === flow?.parentId);
 
-  // States
+  // Canvas States
   const [initialScene, setInitialScene] = useState(null);
   const [isLoadingScene, setIsLoadingScene] = useState(true);
   const [saveStatus, setSaveStatus] = useState('saved'); // 'saved' | 'saving' | 'dirty'
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const [presetMenuOpen, setPresetMenuOpen] = useState(false);
   const [titleEditing, setTitleEditing] = useState(false);
   const [titleValue, setTitleValue] = useState(flow?.name || '');
   const [excalidrawAPI, setExcalidrawAPI] = useState(null);
   const [isLibraryModalOpen, setIsLibraryModalOpen] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isMinimapVisible, setIsMinimapVisible] = useState(true);
+  const [isSoundEnabled, setIsSoundEnabled] = useState(sound.isEnabled());
   const [toastMessage, setToastMessage] = useState(null);
+
+  // Live Canvas Telemetry States
+  const [cursorCoords, setCursorCoords] = useState({ x: 0, y: 0 });
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [elementCount, setElementCount] = useState(0);
+  const [selectedCount, setSelectedCount] = useState(0);
+  const [activeTool, setActiveTool] = useState('selection');
+
+  // Canvas Style (grid | nogrid)
+  const [currentPreset, setCurrentPreset] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('easydraw:canvas_preset');
+      if (saved === 'grid' || saved === 'nogrid') return saved;
+      return 'grid';
+    }
+    return 'grid';
+  });
 
   const excalidrawAPIRef = useRef(null);
   const isLoadedRef = useRef(false);
   const latestSceneRef = useRef(null);
   const saveTimeoutRef = useRef(null);
   const exportMenuRef = useRef(null);
+  const presetMenuRef = useRef(null);
   const importFileRef = useRef(null);
   const resolvedThemeRef = useRef(resolvedTheme);
+  const currentPresetRef = useRef(currentPreset);
 
   useEffect(() => {
     resolvedThemeRef.current = resolvedTheme;
   }, [resolvedTheme]);
+
+  useEffect(() => {
+    currentPresetRef.current = currentPreset;
+  }, [currentPreset]);
 
   // Sync title when flow changes
   useEffect(() => {
@@ -76,12 +163,15 @@ export const FlowEditorPage = () => {
       if (exportMenuRef.current && !exportMenuRef.current.contains(e.target)) {
         setExportMenuOpen(false);
       }
+      if (presetMenuRef.current && !presetMenuRef.current.contains(e.target)) {
+        setPresetMenuOpen(false);
+      }
     };
-    if (exportMenuOpen) {
+    if (exportMenuOpen || presetMenuOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [exportMenuOpen]);
+  }, [exportMenuOpen, presetMenuOpen]);
 
   /* ==========================================================================
      Excalidraw Library Management & Cross-session Sync
@@ -99,6 +189,7 @@ export const FlowEditorPage = () => {
       if (browseBtn) {
         e.preventDefault();
         e.stopPropagation();
+        sound.playSwitch();
         setIsLibraryModalOpen(true);
       }
     };
@@ -109,8 +200,67 @@ export const FlowEditorPage = () => {
     };
   }, []);
 
+  /* Soften dotted canvas grid lines & guarantee dark/light background fill */
+  useEffect(() => {
+    const originalStroke = CanvasRenderingContext2D.prototype.stroke;
+
+    CanvasRenderingContext2D.prototype.stroke = function (...args) {
+      const strokeStyle =
+        typeof this.strokeStyle === 'string'
+          ? this.strokeStyle.toLowerCase().replace(/\s+/g, '')
+          : '';
+      if (
+        strokeStyle === '#e5e5e5' ||
+        strokeStyle === '#dddddd' ||
+        strokeStyle === 'rgb(229,229,229)' ||
+        strokeStyle === 'rgb(221,221,221)'
+      ) {
+        const prevAlpha = this.globalAlpha;
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        this.globalAlpha = prevAlpha * (isDark ? 0.2 : 0.4);
+        const res = originalStroke.apply(this, args);
+        this.globalAlpha = prevAlpha;
+        return res;
+      }
+      return originalStroke.apply(this, args);
+    };
+
+    return () => {
+      CanvasRenderingContext2D.prototype.stroke = originalStroke;
+    };
+  }, []);
+
   /* ==========================================================================
-     CRITICAL: Lazy load saved scene ONCE on mount
+     Global Keyboard Shortcuts: ⌘K, M, S, ⇧1, ⇧0
+     ========================================================================== */
+  useEffect(() => {
+    const handleGlobalKey = (e) => {
+      // Don't trigger if user is actively typing in an input/textarea
+      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+      } else if (e.key.toLowerCase() === 'm' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        sound.playClick();
+        setIsMinimapVisible((prev) => !prev);
+      } else if (e.key.toLowerCase() === 's' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        const next = !isSoundEnabled;
+        setIsSoundEnabled(next);
+        sound.setEnabled(next);
+        setToastMessage(next ? 'Audio Haptics: ON' : 'Audio Haptics: MUTED');
+        setTimeout(() => setToastMessage(null), 2000);
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKey);
+    return () => window.removeEventListener('keydown', handleGlobalKey);
+  }, [isSoundEnabled]);
+
+  /* ==========================================================================
+     Lazy load saved scene ONCE on mount
      ========================================================================== */
   useEffect(() => {
     let isCancelled = false;
@@ -126,20 +276,35 @@ export const FlowEditorPage = () => {
           const appState = saved?.appState || {};
           const files = saved?.files || {};
 
-          // Set initial data
+          // Determine initial background and grid from current style and theme
+          const isDark = resolvedThemeRef.current === THEMES.DARK;
+          const defaultTargetBg = isDark ? DEFAULT_DARK_BG : DEFAULT_LIGHT_BG;
+          const isGrid = currentPresetRef.current === 'grid';
+
+          let initialBg = appState.viewBackgroundColor;
+          // In dark mode default to black (#000000), in light mode default to white (#ffffff),
+          // unless the user customized the background color themselves.
+          if (isDefaultCanvasBg(initialBg)) {
+            initialBg = defaultTargetBg;
+          }
+
           setInitialScene({
             elements,
             appState: {
               ...appState,
+              viewBackgroundColor: initialBg,
               theme: resolvedThemeRef.current,
+              gridModeEnabled: isGrid,
+              gridSize: isGrid ? 20 : null,
               isLoading: false,
             },
             files,
           });
 
           latestSceneRef.current = { elements, appState, files };
+          setElementCount(elements.filter((el) => !el.isDeleted).length);
           setIsLoadingScene(false);
-          // Mark as loaded so subsequent onChange calls can safely autosave
+
           setTimeout(() => {
             isLoadedRef.current = true;
           }, 300);
@@ -162,7 +327,6 @@ export const FlowEditorPage = () => {
 
     return () => {
       isCancelled = true;
-      // Flush unsaved changes on unmount
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
@@ -172,6 +336,41 @@ export const FlowEditorPage = () => {
       }
     };
   }, [flowId]);
+
+  /* Synchronize canvas background whenever user changes theme */
+  useEffect(() => {
+    if (excalidrawAPIRef.current) {
+      const isDark = resolvedTheme === THEMES.DARK;
+      const currentBg = excalidrawAPIRef.current.getAppState()?.viewBackgroundColor;
+      if (isDefaultCanvasBg(currentBg)) {
+        excalidrawAPIRef.current.updateScene({
+          appState: {
+            theme: resolvedTheme,
+            viewBackgroundColor: isDark ? DEFAULT_DARK_BG : DEFAULT_LIGHT_BG,
+          },
+        });
+      } else {
+        excalidrawAPIRef.current.updateScene({
+          appState: {
+            theme: resolvedTheme,
+          },
+        });
+      }
+    }
+  }, [resolvedTheme]);
+
+  /* Synchronize grid whenever user toggles preset (grid / nogrid) */
+  useEffect(() => {
+    if (excalidrawAPIRef.current) {
+      const isGrid = currentPreset === 'grid';
+      excalidrawAPIRef.current.updateScene({
+        appState: {
+          gridModeEnabled: isGrid,
+          gridSize: isGrid ? 20 : null,
+        },
+      });
+    }
+  }, [currentPreset]);
 
   /* ==========================================================================
      Autosave with Debouncing (~700ms)
@@ -201,13 +400,28 @@ export const FlowEditorPage = () => {
 
   const handleCanvasChange = useCallback(
     (elements, appState, files) => {
-      // Ignore initial render changes before saved scene is loaded
       if (!isLoadedRef.current) return;
+
+      const nonDeleted = elements.filter((el) => !el.isDeleted);
+      setElementCount(nonDeleted.length);
+      setSelectedCount(Object.keys(appState?.selectedElementIds || {}).length);
+      setZoomLevel(appState?.zoom?.value || 1);
+      if (appState?.activeTool?.type) {
+        setActiveTool(appState.activeTool.type);
+      }
+
+      const isDark = resolvedTheme === THEMES.DARK;
+      let bg = appState?.viewBackgroundColor;
+      // In dark mode default to black (#000000), in light mode default to white (#ffffff),
+      // unless the user customized the background color themselves.
+      if (isDefaultCanvasBg(bg)) {
+        bg = isDark ? DEFAULT_DARK_BG : DEFAULT_LIGHT_BG;
+      }
 
       const currentScene = {
         elements,
         appState: {
-          viewBackgroundColor: appState.viewBackgroundColor,
+          viewBackgroundColor: bg,
           currentItemFontFamily: appState.currentItemFontFamily,
           theme: resolvedTheme,
         },
@@ -224,7 +438,10 @@ export const FlowEditorPage = () => {
   const handleTitleSubmit = () => {
     setTitleEditing(false);
     if (titleValue.trim() && titleValue.trim() !== flow?.name) {
+      sound.playClick();
       editFlow(flow.id, titleValue.trim());
+      setToastMessage(`Renamed diagram to "${titleValue.trim()}"`);
+      setTimeout(() => setToastMessage(null), 2500);
     } else {
       setTitleValue(flow?.name || '');
     }
@@ -232,7 +449,7 @@ export const FlowEditorPage = () => {
 
   /* Navigation Back */
   const handleBack = () => {
-    // Flush any pending save
+    sound.playClick();
     if (latestSceneRef.current) {
       saveScene(flowId, latestSceneRef.current);
       updateFlowTimestamp(flowId);
@@ -241,6 +458,68 @@ export const FlowEditorPage = () => {
       navigate(`/folder/${flow.parentId}`);
     } else {
       navigate('/');
+    }
+  };
+
+  /* ==========================================================================
+     Preset Switching (Grid vs No Grid)
+     ========================================================================== */
+  const handleSelectPreset = (presetId) => {
+    setPresetMenuOpen(false);
+    setCurrentPreset(presetId);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('easydraw:canvas_preset', presetId);
+    }
+    sound.playSwitch();
+    const cfg = PRESET_CONFIGS[presetId] || PRESET_CONFIGS.grid;
+    const isGrid = presetId === 'grid';
+    if (excalidrawAPIRef.current) {
+      excalidrawAPIRef.current.updateScene({
+        appState: {
+          gridModeEnabled: isGrid,
+          gridSize: isGrid ? 20 : null,
+        },
+      });
+    }
+    setToastMessage(`Canvas: ${cfg.label}`);
+    setTimeout(() => setToastMessage(null), 2500);
+  };
+
+  const handleThemeChange = (newTheme) => {
+    sound.playSwitch();
+    setTheme(newTheme);
+    const isDark = newTheme === THEMES.DARK;
+    if (excalidrawAPIRef.current) {
+      const currentBg = excalidrawAPIRef.current.getAppState()?.viewBackgroundColor;
+      if (isDefaultCanvasBg(currentBg)) {
+        excalidrawAPIRef.current.updateScene({
+          appState: {
+            viewBackgroundColor: isDark ? DEFAULT_DARK_BG : DEFAULT_LIGHT_BG,
+            theme: newTheme,
+          },
+        });
+      } else {
+        excalidrawAPIRef.current.updateScene({
+          appState: {
+            theme: newTheme,
+          },
+        });
+      }
+    }
+  };
+
+  const handleCyclePreset = () => {
+    const nextPreset = currentPreset === 'grid' ? 'nogrid' : 'grid';
+    handleSelectPreset(nextPreset);
+  };
+
+  /* Reset Zoom to 100% */
+  const handleResetZoom = () => {
+    if (excalidrawAPIRef.current) {
+      excalidrawAPIRef.current.updateScene({
+        appState: { zoom: { value: 1 } },
+      });
+      sound.playClick();
     }
   };
 
@@ -256,6 +535,7 @@ export const FlowEditorPage = () => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    sound.playChime();
   };
 
   const getCleanFilename = (ext) => {
@@ -278,6 +558,8 @@ export const FlowEditorPage = () => {
       type: 'application/json',
     });
     downloadFile(blob, getCleanFilename('excalidraw'));
+    setToastMessage('Exported raw .excalidraw file');
+    setTimeout(() => setToastMessage(null), 3000);
   };
 
   const handleExportPNG = async () => {
@@ -299,6 +581,8 @@ export const FlowEditorPage = () => {
         mimeType: 'image/png',
       });
       downloadFile(blob, getCleanFilename('png'));
+      setToastMessage('Exported diagram PNG');
+      setTimeout(() => setToastMessage(null), 3000);
     } catch (err) {
       console.error('Failed to export PNG:', err);
       alert('Could not export diagram as PNG.');
@@ -327,14 +611,43 @@ export const FlowEditorPage = () => {
       const svgStr = serializer.serializeToString(svg);
       const blob = new Blob([svgStr], { type: 'image/svg+xml' });
       downloadFile(blob, getCleanFilename('svg'));
+      setToastMessage('Exported diagram SVG vector');
+      setTimeout(() => setToastMessage(null), 3000);
     } catch (err) {
       console.error('Failed to export SVG:', err);
       alert('Could not export diagram as SVG.');
     }
   };
 
+  const handleCopyClipboard = async () => {
+    setExportMenuOpen(false);
+    if (!excalidrawAPIRef.current) return;
+    try {
+      const elements = excalidrawAPIRef.current.getSceneElements();
+      const appState = excalidrawAPIRef.current.getAppState();
+      const files = excalidrawAPIRef.current.getFiles();
+
+      await exportToClipboard({
+        elements,
+        appState: {
+          ...appState,
+          exportWithDarkMode: resolvedTheme === THEMES.DARK,
+          exportBackground: true,
+        },
+        files,
+        mimeType: 'image/png',
+      });
+      sound.playChime();
+      setToastMessage('Diagram copied to clipboard (PNG)');
+      setTimeout(() => setToastMessage(null), 3000);
+    } catch (err) {
+      console.warn('Clipboard API error, downloading PNG fallback:', err);
+      handleExportPNG();
+    }
+  };
+
   /* ==========================================================================
-     Import Handler (Replace current scene with confirmation)
+     Import Handler
      ========================================================================== */
   const handleImportFile = (e) => {
     const file = e.target.files?.[0];
@@ -348,6 +661,7 @@ export const FlowEditorPage = () => {
       return;
     }
 
+    sound.playSwitch();
     const reader = new FileReader();
     reader.onload = async (evt) => {
       try {
@@ -371,6 +685,9 @@ export const FlowEditorPage = () => {
         await saveScene(flowId, sceneObj);
         updateFlowTimestamp(flowId);
         setSaveStatus('saved');
+        sound.playChime();
+        setToastMessage(`Imported ${file.name}`);
+        setTimeout(() => setToastMessage(null), 3000);
       } catch (err) {
         console.error('Failed to parse imported excalidraw file:', err);
         alert('Invalid .excalidraw file format.');
@@ -381,7 +698,18 @@ export const FlowEditorPage = () => {
     reader.readAsText(file);
   };
 
+  const handleClearCanvas = () => {
+    if (!excalidrawAPIRef.current) return;
+    const confirmed = window.confirm('Are you sure you want to clear all elements from this canvas?');
+    if (!confirmed) return;
+    sound.playSwitch();
+    excalidrawAPIRef.current.updateScene({ elements: [] });
+    setToastMessage('Canvas cleared');
+    setTimeout(() => setToastMessage(null), 2500);
+  };
+
   const handleDeleteFlow = () => {
+    sound.playClick();
     const confirmed = window.confirm(
       `Are you sure you want to delete "${flow?.name || 'this diagram'}"? This action cannot be undone.`
     );
@@ -396,8 +724,8 @@ export const FlowEditorPage = () => {
   };
 
   return (
-    <div className={styles.editorContainer}>
-      {/* Top Bar Chrome */}
+    <div className={styles.editorContainer} data-preset={currentPreset}>
+      {/* Floating Tactical Top HUD Dock */}
       <header className={styles.topBar}>
         {/* Left: Back & Breadcrumb info */}
         <div className={styles.leftGroup}>
@@ -405,15 +733,16 @@ export const FlowEditorPage = () => {
             type="button"
             className={styles.backBtn}
             onClick={handleBack}
-            title={`Back to ${parentFolder ? parentFolder.name : 'Workspace'}`}
+            title={`Back to ${parentFolder ? parentFolder.name : 'Workspace'} [B]`}
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft size={13} />
             <span className={styles.backLabel}>
               {parentFolder ? parentFolder.name : 'Workspace'}
             </span>
+            <span className="keycap">B</span>
           </button>
 
-          <span className={styles.divider}>/</span>
+          <span className={styles.divider}>{'//'}</span>
 
           {/* Editable Title */}
           {titleEditing ? (
@@ -435,7 +764,10 @@ export const FlowEditorPage = () => {
           ) : (
             <h1
               className={styles.flowTitle}
-              onClick={() => setTitleEditing(true)}
+              onClick={() => {
+                sound.playClick();
+                setTitleEditing(true);
+              }}
               title="Click to rename"
             >
               {flow?.name || 'Untitled Flow'}
@@ -443,27 +775,55 @@ export const FlowEditorPage = () => {
           )}
         </div>
 
-        {/* Right: Autosave status & Actions */}
+        {/* Right: Tactical Actions Dock */}
         <div className={styles.rightGroup}>
-          {/* Autosave Indicator */}
-          <div className={styles.saveIndicator}>
-            {saveStatus === 'saving' && (
-              <>
-                <Loader2 size={13} className={styles.spinningIcon} />
-                <span>Saving...</span>
-              </>
-            )}
-            {saveStatus === 'saved' && (
-              <>
-                <Check size={13} className={styles.savedIcon} />
-                <span>Saved locally</span>
-              </>
-            )}
-            {saveStatus === 'dirty' && (
-              <>
-                <span className={styles.dirtyDot}></span>
-                <span>Unsaved</span>
-              </>
+          {/* Command Palette Trigger */}
+          <button
+            type="button"
+            className={styles.topBtn}
+            onClick={() => {
+              setIsCommandPaletteOpen(true);
+            }}
+            title="Open Command Palette (Cmd/Ctrl + K)"
+          >
+            <Command size={13} />
+            <span>Commands</span>
+            <span className="keycap">⌘K</span>
+          </button>
+
+          {/* Canvas Style Selector Dropdown (Grid / No Grid) */}
+          <div className={styles.dropdownContainer} ref={presetMenuRef}>
+            <button
+              type="button"
+              className={`${styles.topBtn} ${styles.presetBtn}`}
+              onClick={() => {
+                sound.playClick();
+                setPresetMenuOpen(!presetMenuOpen);
+              }}
+              title="Change canvas style (Grid / No Grid)"
+            >
+              {currentPreset === 'grid' ? <Grid size={13} /> : <Square size={13} />}
+              <span>{currentPreset === 'grid' ? 'GRID' : 'NO GRID'}</span>
+              <ChevronDown size={11} />
+            </button>
+
+            {presetMenuOpen && (
+              <div className={styles.dropdownMenu}>
+                {PRESETS.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    className={`${styles.dropdownItem} ${currentPreset === p.id ? styles.activeDropdownItem : ''}`}
+                    onClick={() => handleSelectPreset(p.id)}
+                  >
+                    {p.id === 'grid' ? <Grid size={13} /> : <Square size={13} />}
+                    <div className={styles.itemContent}>
+                      <span className={styles.itemTitle}>{p.label}</span>
+                      <span className={styles.itemDesc}>{p.desc}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
             )}
           </div>
 
@@ -471,14 +831,17 @@ export const FlowEditorPage = () => {
           <button
             type="button"
             className={styles.topBtn}
-            onClick={() => setIsLibraryModalOpen(true)}
+            onClick={() => {
+              sound.playSwitch();
+              setIsLibraryModalOpen(true);
+            }}
             title="Browse and add Excalidraw libraries"
           >
-            <LibraryIcon size={14} />
+            <LibraryIcon size={13} />
             <span>Libraries</span>
           </button>
 
-          {/* Import file into current scene */}
+          {/* Import file */}
           <input
             type="file"
             accept=".excalidraw,.json"
@@ -489,10 +852,13 @@ export const FlowEditorPage = () => {
           <button
             type="button"
             className={styles.topBtn}
-            onClick={() => importFileRef.current?.click()}
+            onClick={() => {
+              sound.playClick();
+              importFileRef.current?.click();
+            }}
             title="Import .excalidraw file into this diagram"
           >
-            <Upload size={14} />
+            <Upload size={13} />
             <span>Import</span>
           </button>
 
@@ -500,13 +866,16 @@ export const FlowEditorPage = () => {
           <div className={styles.dropdownContainer} ref={exportMenuRef}>
             <button
               type="button"
-              className={`${styles.topBtn} ${styles.exportBtn}`}
-              onClick={() => setExportMenuOpen(!exportMenuOpen)}
-              title="Export diagram in various formats"
+              className={styles.topBtn}
+              onClick={() => {
+                sound.playClick();
+                setExportMenuOpen(!exportMenuOpen);
+              }}
+              title="Export or copy diagram"
             >
-              <Download size={14} />
+              <Download size={13} />
               <span>Export</span>
-              <ChevronDown size={12} />
+              <ChevronDown size={11} />
             </button>
 
             {exportMenuOpen && (
@@ -514,12 +883,12 @@ export const FlowEditorPage = () => {
                 <button
                   type="button"
                   className={styles.dropdownItem}
-                  onClick={handleExportExcalidraw}
+                  onClick={handleCopyClipboard}
                 >
-                  <FileCode size={14} />
+                  <Copy size={14} />
                   <div className={styles.itemContent}>
-                    <span className={styles.itemTitle}>Excalidraw (.excalidraw)</span>
-                    <span className={styles.itemDesc}>Lossless, editable format</span>
+                    <span className={styles.itemTitle}>Copy PNG to Clipboard</span>
+                    <span className={styles.itemDesc}>Quick paste into Notion, Slack, docs</span>
                   </div>
                 </button>
                 <button
@@ -529,8 +898,8 @@ export const FlowEditorPage = () => {
                 >
                   <ImageIcon size={14} />
                   <div className={styles.itemContent}>
-                    <span className={styles.itemTitle}>PNG Image</span>
-                    <span className={styles.itemDesc}>High-res raster for docs</span>
+                    <span className={styles.itemTitle}>Download PNG Image</span>
+                    <span className={styles.itemDesc}>High-res raster file</span>
                   </div>
                 </button>
                 <button
@@ -540,8 +909,19 @@ export const FlowEditorPage = () => {
                 >
                   <SvgIcon size={14} />
                   <div className={styles.itemContent}>
-                    <span className={styles.itemTitle}>SVG Vector</span>
-                    <span className={styles.itemDesc}>Scalable vector graphic</span>
+                    <span className={styles.itemTitle}>Download SVG Vector</span>
+                    <span className={styles.itemDesc}>Scalable vector graphics</span>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  className={styles.dropdownItem}
+                  onClick={handleExportExcalidraw}
+                >
+                  <FileCode size={14} />
+                  <div className={styles.itemContent}>
+                    <span className={styles.itemTitle}>Raw .excalidraw</span>
+                    <span className={styles.itemDesc}>Lossless diagram schema</span>
                   </div>
                 </button>
               </div>
@@ -556,44 +936,61 @@ export const FlowEditorPage = () => {
             title="Delete this diagram"
             aria-label="Delete diagram"
           >
-            <Trash2 size={14} />
+            <Trash2 size={13} />
           </button>
 
-          {/* Theme Quick Switcher */}
+          {/* Theme Switcher */}
           <div className={styles.themeToggleGroup}>
             <button
               type="button"
-              className={`${styles.themeMiniBtn} ${theme === THEMES.LIGHT ? styles.activeThemeMini : ''}`}
-              onClick={() => setTheme(THEMES.LIGHT)}
-              title="Light canvas"
+              className={`${styles.themeMiniBtn} ${
+                theme === THEMES.LIGHT ? styles.activeThemeMini : ''
+              }`}
+              onClick={() => handleThemeChange(THEMES.LIGHT)}
+              title="Light Mode"
             >
-              <Sun size={13} />
+              <Sun size={12} />
             </button>
             <button
               type="button"
-              className={`${styles.themeMiniBtn} ${theme === THEMES.DARK ? styles.activeThemeMini : ''}`}
-              onClick={() => setTheme(THEMES.DARK)}
-              title="Dark canvas"
+              className={`${styles.themeMiniBtn} ${
+                theme === THEMES.DARK ? styles.activeThemeMini : ''
+              }`}
+              onClick={() => handleThemeChange(THEMES.DARK)}
+              title="Dark Mode"
             >
-              <Moon size={13} />
+              <Moon size={12} />
             </button>
           </div>
         </div>
       </header>
 
-      {/* Excalidraw Canvas Area */}
+      {/* Primary Excalidraw Canvas Workspace */}
       <main className={styles.canvasArea}>
         {isLoadingScene || !initialScene ? (
           <div className={styles.loadingArea}>
             <Loader2 size={24} className={styles.spinningIcon} />
-            <span>Loading diagram...</span>
+            <span>INITIALIZING ENGINE & SCHEMATICS...</span>
           </div>
         ) : (
           <div className={styles.excalidrawWrapper}>
             <Excalidraw
+              theme={resolvedTheme}
               excalidrawAPI={(api) => {
                 excalidrawAPIRef.current = api;
                 setExcalidrawAPI(api);
+                const isDark = resolvedTheme === THEMES.DARK;
+                const curBg = api.getAppState()?.viewBackgroundColor;
+                if (isDefaultCanvasBg(curBg)) {
+                  api.updateScene({
+                    appState: {
+                      theme: resolvedTheme,
+                      viewBackgroundColor: isDark ? DEFAULT_DARK_BG : DEFAULT_LIGHT_BG,
+                      gridModeEnabled: currentPreset === 'grid',
+                      gridSize: currentPreset === 'grid' ? 20 : null,
+                    },
+                  });
+                }
               }}
               libraryReturnUrl={
                 typeof window !== 'undefined'
@@ -602,7 +999,14 @@ export const FlowEditorPage = () => {
               }
               initialData={initialScene}
               onChange={handleCanvasChange}
-              theme={resolvedTheme}
+              onPointerUpdate={(payload) => {
+                if (payload?.pointer) {
+                  setCursorCoords({
+                    x: Math.round(payload.pointer.x),
+                    y: Math.round(payload.pointer.y),
+                  });
+                }
+              }}
               UIOptions={{
                 canvasActions: {
                   loadScene: false,
@@ -612,9 +1016,67 @@ export const FlowEditorPage = () => {
                 },
               }}
             />
+
+            {/* Minimap & Coordinate Radar HUD */}
+            <Minimap
+              excalidrawAPI={excalidrawAPI}
+              isVisible={isMinimapVisible}
+              onToggleVisible={() => setIsMinimapVisible((v) => !v)}
+            />
           </div>
         )}
       </main>
+
+      {/* Monospace Telemetry Status Bar HUD */}
+      <CanvasStatusBar
+        cursorCoords={cursorCoords}
+        zoom={zoomLevel}
+        elementCount={elementCount}
+        selectedCount={selectedCount}
+        activeTool={activeTool}
+        saveStatus={saveStatus}
+        isSoundEnabled={isSoundEnabled}
+        onToggleSound={() => {
+          const next = !isSoundEnabled;
+          setIsSoundEnabled(next);
+          sound.setEnabled(next);
+          setToastMessage(next ? 'Audio Haptics: ON' : 'Audio Haptics: MUTED');
+          setTimeout(() => setToastMessage(null), 2000);
+        }}
+        isMinimapVisible={isMinimapVisible}
+        onToggleMinimap={() => {
+          sound.playClick();
+          setIsMinimapVisible((v) => !v);
+        }}
+        currentPreset={currentPreset}
+        onCyclePreset={handleCyclePreset}
+        onResetZoom={handleResetZoom}
+      />
+
+      {/* Command Palette Overlay (⌘K) */}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        excalidrawAPI={excalidrawAPI}
+        currentPreset={currentPreset}
+        onSelectPreset={handleSelectPreset}
+        isMinimapVisible={isMinimapVisible}
+        onToggleMinimap={() => setIsMinimapVisible((v) => !v)}
+        isSoundEnabled={isSoundEnabled}
+        onToggleSound={() => {
+          const next = !isSoundEnabled;
+          setIsSoundEnabled(next);
+          sound.setEnabled(next);
+        }}
+        onExportPNG={handleExportPNG}
+        onExportSVG={handleExportSVG}
+        onExportExcalidraw={handleExportExcalidraw}
+        onCopyClipboard={handleCopyClipboard}
+        flows={flows}
+        currentFlowId={flowId}
+        onNavigateFlow={(id) => navigate(`/flow/${id}`)}
+        onClearCanvas={handleClearCanvas}
+      />
 
       {/* In-app Library Browser Modal */}
       <LibraryBrowserModal
@@ -624,15 +1086,16 @@ export const FlowEditorPage = () => {
         excalidrawAPI={excalidrawAPI}
         resolvedTheme={resolvedTheme}
         onNotification={(msg) => {
+          sound.playChime();
           setToastMessage(msg);
           setTimeout(() => setToastMessage(null), 3500);
         }}
       />
 
-      {/* Toast Notification */}
+      {/* Mechanical Toast Notification */}
       {toastMessage && (
         <div className={styles.toast} role="status">
-          <Check size={16} className={styles.toastSuccessIcon} />
+          <Check size={14} className={styles.toastSuccessIcon} />
           <span>{toastMessage}</span>
         </div>
       )}

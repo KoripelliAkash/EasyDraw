@@ -7,6 +7,7 @@ import {
   Trash2,
   FolderInput,
 } from 'lucide-react';
+import { sound } from '../../utils/audio.js';
 import styles from './FolderCard.module.css';
 
 export const FolderCard = ({ folder, itemCount = 0, onRename, onMove, onDelete }) => {
@@ -38,11 +39,17 @@ export const FolderCard = ({ folder, itemCount = 0, onRename, onMove, onDelete }
   return (
     <div
       className={`${styles.card} ${menuOpen ? styles.cardActive : ''}`}
-      onClick={() => navigate(`/folder/${folder.id}`)}
+      onClick={() => {
+        sound.playClick();
+        navigate(`/folder/${folder.id}`);
+      }}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
-        if (e.key === 'Enter') navigate(`/folder/${folder.id}`);
+        if (e.key === 'Enter') {
+          sound.playClick();
+          navigate(`/folder/${folder.id}`);
+        }
       }}
     >
       <div className={styles.topRow}>

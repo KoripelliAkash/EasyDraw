@@ -1,0 +1,145 @@
+.minimapContainer {
+  position: absolute;
+  bottom: 60px;
+  right: 16px;
+  width: 220px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--hud-shadow);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: all var(--transition-fast);
+  user-select: none;
+}
+
+.collapsedContainer {
+  width: auto;
+  height: auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  background-color: var(--bg-subtle);
+  border-bottom: 1px solid var(--border-default);
+  cursor: pointer;
+}
+
+.titleGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.radarDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--status-emerald);
+  box-shadow: 0 0 6px var(--status-emerald);
+  animation: pulseDot 2s infinite ease-in-out;
+}
+
+@keyframes pulseDot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.85);
+  }
+}
+
+.headerLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.toggleBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-xs);
+  color: var(--text-muted);
+  transition: color var(--transition-fast);
+}
+
+.toggleBtn:hover {
+  color: var(--text-primary);
+}
+
+.canvasWrapper {
+  position: relative;
+  width: 100%;
+  height: 130px;
+  background-color: var(--bg-app);
+  cursor: crosshair;
+  overflow: hidden;
+}
+
+.radarCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.crosshairCornerTL,
+.crosshairCornerTR,
+.crosshairCornerBL,
+.crosshairCornerBR {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-color: var(--border-strong);
+  border-style: solid;
+  pointer-events: none;
+}
+
+.crosshairCornerTL {
+  top: 4px;
+  left: 4px;
+  border-width: 1px 0 0 1px;
+}
+
+.crosshairCornerTR {
+  top: 4px;
+  right: 4px;
+  border-width: 1px 1px 0 0;
+}
+
+.crosshairCornerBL {
+  bottom: 4px;
+  left: 4px;
+  border-width: 0 0 1px 1px;
+}
+
+.crosshairCornerBR {
+  bottom: 4px;
+  right: 4px;
+  border-width: 0 1px 1px 0;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 8px;
+  background-color: var(--bg-surface);
+  border-top: 1px solid var(--border-default);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-muted);
+}

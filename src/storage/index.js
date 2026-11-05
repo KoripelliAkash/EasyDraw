@@ -378,10 +378,16 @@ export const createFlow = async (name, parentId = 'root') => {
   flows.push(newFlow);
   saveFlows(flows);
 
-  // Initialize an empty scene in IndexedDB
+  // Initialize an empty scene in IndexedDB based on active theme
+  const pref = getThemePreference();
+  const isDark =
+    pref === THEMES.DARK ||
+    (pref === THEMES.SYSTEM &&
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-color-scheme: dark)')?.matches);
   await saveScene(newFlow.id, {
     elements: [],
-    appState: { viewBackgroundColor: '#ffffff' },
+    appState: { viewBackgroundColor: isDark ? '#000000' : '#ffffff' },
     files: {},
   });
 

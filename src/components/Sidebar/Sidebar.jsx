@@ -16,6 +16,7 @@ import {
 import { useWorkspace } from '../../context/useWorkspace.js';
 import { useTheme } from '../../context/useTheme.js';
 import { THEMES } from '../../types/index.js';
+import { sound } from '../../utils/audio.js';
 import styles from './Sidebar.module.css';
 
 export const Sidebar = ({ onOpenNewFolder, onOpenNewFlow, onOpenImportWorkspace }) => {
@@ -30,6 +31,7 @@ export const Sidebar = ({ onOpenNewFolder, onOpenNewFlow, onOpenImportWorkspace 
   const toggleCollapse = (folderId, e) => {
     e.preventDefault();
     e.stopPropagation();
+    sound.playClick();
     setCollapsed((prev) => ({ ...prev, [folderId]: !prev[folderId] }));
   };
 
@@ -98,7 +100,10 @@ export const Sidebar = ({ onOpenNewFolder, onOpenNewFlow, onOpenImportWorkspace 
         <div
           className={`${styles.treeItem} ${isActive ? styles.activeTreeItem : ''}`}
           style={{ paddingLeft: `${12 + depth * 14}px` }}
-          onClick={() => navigate(`/folder/${node.id}`)}
+          onClick={() => {
+            sound.playClick();
+            navigate(`/folder/${node.id}`);
+          }}
         >
           <button
             type="button"
@@ -135,9 +140,16 @@ export const Sidebar = ({ onOpenNewFolder, onOpenNewFlow, onOpenImportWorkspace 
     <aside className={styles.sidebar}>
       {/* Brand Header */}
       <div className={styles.header}>
-        <div className={styles.brand} onClick={() => navigate('/')}>
+        <div
+          className={styles.brand}
+          onClick={() => {
+            sound.playClick();
+            navigate('/');
+          }}
+        >
           <span className={styles.brandBadge}>ED</span>
-          <span className={styles.brandName}>easydraw</span>
+          <span className={styles.brandName}>EASYDRAW</span>
+          <span className={styles.brandSub}>{'// STUDIO'}</span>
         </div>
       </div>
 
@@ -146,19 +158,25 @@ export const Sidebar = ({ onOpenNewFolder, onOpenNewFlow, onOpenImportWorkspace 
         <button
           type="button"
           className={styles.actionBtn}
-          onClick={onOpenNewFlow}
+          onClick={() => {
+            sound.playClick();
+            onOpenNewFlow();
+          }}
           title="Create a new flow diagram"
         >
-          <Plus size={14} />
+          <Plus size={13} />
           <span>New Flow</span>
         </button>
         <button
           type="button"
           className={`${styles.actionBtn} ${styles.actionBtnSecondary}`}
-          onClick={onOpenNewFolder}
+          onClick={() => {
+            sound.playClick();
+            onOpenNewFolder();
+          }}
           title="Create a new folder"
         >
-          <FolderIcon size={14} />
+          <FolderIcon size={13} />
           <span>Folder</span>
         </button>
       </div>

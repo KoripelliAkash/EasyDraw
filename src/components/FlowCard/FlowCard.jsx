@@ -9,6 +9,7 @@ import {
   Download,
 } from 'lucide-react';
 import { getScene } from '../../storage/index.js';
+import { sound } from '../../utils/audio.js';
 import styles from './FlowCard.module.css';
 
 export const FlowCard = ({ flow, onRename, onMove, onDelete }) => {
@@ -75,11 +76,17 @@ export const FlowCard = ({ flow, onRename, onMove, onDelete }) => {
   return (
     <div
       className={`${styles.card} ${menuOpen ? styles.cardActive : ''}`}
-      onClick={() => navigate(`/flow/${flow.id}`)}
+      onClick={() => {
+        sound.playClick();
+        navigate(`/flow/${flow.id}`);
+      }}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
-        if (e.key === 'Enter') navigate(`/flow/${flow.id}`);
+        if (e.key === 'Enter') {
+          sound.playClick();
+          navigate(`/flow/${flow.id}`);
+        }
       }}
     >
       <div className={styles.previewContainer}>
@@ -87,7 +94,8 @@ export const FlowCard = ({ flow, onRename, onMove, onDelete }) => {
           <img src={flow.thumbnail} alt="" className={styles.thumbnail} />
         ) : (
           <div className={styles.fallbackIcon}>
-            <FileCode size={26} className={styles.icon} />
+            <FileCode size={22} className={styles.icon} />
+            <span className={styles.schematicTag}>SCHEMATIC</span>
           </div>
         )}
 
@@ -97,12 +105,13 @@ export const FlowCard = ({ flow, onRename, onMove, onDelete }) => {
             className={styles.menuBtn}
             onClick={(e) => {
               e.stopPropagation();
+              sound.playClick();
               setMenuOpen(!menuOpen);
             }}
             title="Flow actions"
             aria-label="Flow actions"
           >
-            <MoreVertical size={15} />
+            <MoreVertical size={14} />
           </button>
 
           {menuOpen && (

@@ -1,35 +1,39 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: 14px;
 }
 
 .helperText {
-  font-size: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
   color: var(--text-muted);
-  background-color: var(--bg-surface-hover);
+  background-color: var(--bg-subtle);
   padding: 6px 10px;
   border-radius: var(--radius-xs);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-default);
 }
 
 .label {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 500;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
   color: var(--text-primary);
+  text-transform: uppercase;
 }
 
 .input,
 .select {
   width: 100%;
-  padding: 8px 12px;
+  padding: 8px 10px;
   background-color: var(--bg-app);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-xs);
   color: var(--text-primary);
+  font-family: var(--font-sans);
   font-size: 13px;
   outline: none;
   transition: border-color var(--transition-fast);
@@ -37,23 +41,26 @@
 
 .input:focus,
 .select:focus {
-  border-color: var(--border-focus);
+  border-color: var(--accent);
 }
 
 .footer {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
+  gap: 8px;
+  margin-top: 6px;
 }
 
 .cancelBtn {
-  padding: 7px 14px;
-  font-size: 13px;
-  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
   border-radius: var(--radius-xs);
-  background-color: var(--bg-surface);
+  background-color: var(--bg-app);
   border: 1px solid var(--border-default);
   color: var(--text-secondary);
   transition: all var(--transition-fast);
@@ -62,20 +69,34 @@
 .cancelBtn:hover {
   background-color: var(--bg-surface-hover);
   color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.cancelBtn:active {
+  transform: translateY(1px);
 }
 
 .submitBtn {
-  padding: 7px 16px;
-  font-size: 13px;
-  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
   border-radius: var(--radius-xs);
   background-color: var(--accent);
   color: #ffffff;
-  transition: background-color var(--transition-fast);
+  border: 1px solid transparent;
+  transition: all var(--transition-fast);
 }
 
 .submitBtn:hover:not(:disabled) {
   background-color: var(--accent-hover);
+}
+
+.submitBtn:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 .submitBtn:disabled {
@@ -86,105 +107,59 @@
 .deleteDialog {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: 14px;
 }
 
 .dangerNotice {
   display: flex;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  background-color: var(--danger-subtle);
-  border: 1px solid var(--danger-border);
-  border-radius: var(--radius-sm);
+  gap: 10px;
+  padding: 12px;
+  background-color: rgba(239, 68, 68, 0.08);
+  border: 1px solid var(--status-rose);
+  border-radius: var(--radius-xs);
 }
 
 .dangerIcon {
-  color: var(--danger);
+  color: var(--status-rose);
   flex-shrink: 0;
-  margin-top: 2px;
+}
+
+.dangerText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .dangerTitle {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--danger);
-  margin-bottom: 4px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--status-rose);
+  text-transform: uppercase;
 }
 
 .dangerDesc {
   font-size: 12px;
   color: var(--text-secondary);
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
-.dangerBtn {
-  padding: 7px 16px;
-  font-size: 13px;
-  font-weight: 500;
-  border-radius: var(--radius-xs);
-  background-color: var(--danger);
+.deleteBtn {
+  background-color: var(--status-rose);
   color: #ffffff;
-  transition: background-color var(--transition-fast);
-}
-
-.dangerBtn:hover {
-  background-color: var(--danger-hover);
-}
-
-.fileDropArea {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-6);
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--radius-sm);
-  background-color: var(--bg-subtle);
-  text-align: center;
-  gap: var(--space-2);
-}
-
-.fileDropIcon {
-  color: var(--text-muted);
-}
-
-.fileInputLabel {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--accent-text);
-  cursor: pointer;
-  text-decoration: underline;
-}
-
-.hiddenFileInput {
-  display: none;
-}
-
-.optionGroup {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.labelSpan {
-  font-size: 12px;
+  padding: 6px 16px;
+  font-family: var(--font-mono);
+  font-size: 11px;
   font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.radioLabel {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: 13px;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.errorMessage {
-  font-size: 12px;
-  color: var(--danger);
-  padding: 6px 10px;
-  background-color: var(--danger-subtle);
   border-radius: var(--radius-xs);
+  border: 1px solid transparent;
+  transition: all var(--transition-fast);
+}
+
+.deleteBtn:hover {
+  background-color: #dc2626;
+}
+
+.deleteBtn:active {
+  transform: translateY(1px);
 }

@@ -2,46 +2,53 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: var(--space-4);
+  height: 96px;
   background-color: var(--bg-surface);
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
   cursor: pointer;
   transition: all var(--transition-fast);
   position: relative;
-  min-height: 110px;
+  user-select: none;
 }
 
 .card:hover {
   border-color: var(--border-strong);
-  background-color: var(--bg-surface-hover);
-  box-shadow: var(--shadow-subtle);
+  box-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
+}
+
+.card:active {
+  transform: translateY(0);
 }
 
 .cardActive {
   z-index: 50;
+  border-color: var(--accent);
 }
 
 .topRow {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-3);
 }
 
 .iconWrapper {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-sm);
-  background-color: var(--bg-surface-hover);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-xs);
+  background-color: var(--bg-app);
+  border: 1px solid var(--border-default);
   color: var(--text-secondary);
 }
 
-.icon {
-  color: var(--text-secondary);
+.card:hover .iconWrapper {
+  color: var(--accent);
+  border-color: var(--border-strong);
 }
 
 .menuContainer {
@@ -52,15 +59,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
   border-radius: var(--radius-xs);
+  background-color: transparent;
   color: var(--text-muted);
   transition: all var(--transition-fast);
 }
 
 .menuBtn:hover {
-  background-color: var(--bg-surface-active);
+  background-color: var(--bg-surface-hover);
   color: var(--text-primary);
 }
 
@@ -68,68 +76,82 @@
   position: absolute;
   top: 100%;
   right: 0;
-  width: 140px;
+  width: 155px;
   background-color: var(--bg-surface);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-dropdown);
-  padding: 4px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-xs);
+  box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.6);
+  padding: 3px;
   z-index: 100;
   display: flex;
   flex-direction: column;
   gap: 2px;
+  animation: dropMenu 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dropMenu {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .menuItem {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 8px;
   padding: 6px 8px;
-  font-size: 12px;
+  font-family: var(--font-sans);
+  font-size: 11px;
   color: var(--text-secondary);
-  border-radius: 4px;
-  transition: all var(--transition-fast);
+  border-radius: var(--radius-xs);
+  transition: all var(--transition-instant);
   text-align: left;
+  border: 1px solid transparent;
 }
 
 .menuItem:hover {
   background-color: var(--bg-surface-hover);
+  border-color: var(--border-default);
   color: var(--text-primary);
 }
 
-.menuItemDanger {
-  color: var(--danger);
+.deleteItem {
+  color: var(--status-rose);
 }
 
-.menuItemDanger:hover {
-  background-color: var(--danger-subtle);
-  color: var(--danger);
+.deleteItem:hover {
+  background-color: var(--status-rose);
+  border-color: var(--status-rose);
+  color: #ffffff;
 }
 
-.content {
+.bottomContent {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
-.name {
-  font-size: 14px;
-  font-weight: 600;
+.folderTitle {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
   color: var(--text-primary);
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  letter-spacing: -0.2px;
 }
 
 .metaRow {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.dot {
+  gap: 8px;
+  font-family: var(--font-mono);
   font-size: 10px;
-  color: var(--text-faint);
+  color: var(--text-muted);
 }

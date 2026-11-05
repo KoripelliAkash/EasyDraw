@@ -14,6 +14,7 @@ import {
   MoveModal,
   DeleteConfirmModal,
 } from '../../components/Modals/index.jsx';
+import { sound } from '../../utils/audio.js';
 import styles from './WorkspacePage.module.css';
 
 export const WorkspacePage = () => {
@@ -114,7 +115,7 @@ export const WorkspacePage = () => {
           currentTitle={currentFolder ? currentFolder.name : 'All Items'}
         />
 
-        <div className={styles.topActions}>
+          <div className={styles.topActions}>
           <input
             type="file"
             accept=".excalidraw,.json"
@@ -125,7 +126,10 @@ export const WorkspacePage = () => {
           <button
             type="button"
             className={styles.secondaryBtn}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => {
+              sound.playClick();
+              fileInputRef.current?.click();
+            }}
             title="Import an existing .excalidraw diagram"
           >
             <Upload size={13} />
@@ -134,7 +138,10 @@ export const WorkspacePage = () => {
           <button
             type="button"
             className={styles.secondaryBtn}
-            onClick={() => setCreateFolderOpen(true)}
+            onClick={() => {
+              sound.playClick();
+              setCreateFolderOpen(true);
+            }}
             title="Create a new folder"
           >
             <FolderPlus size={13} />
@@ -143,10 +150,13 @@ export const WorkspacePage = () => {
           <button
             type="button"
             className={styles.primaryBtn}
-            onClick={() => setCreateFlowOpen(true)}
+            onClick={() => {
+              sound.playClick();
+              setCreateFlowOpen(true);
+            }}
             title="Create a new flow diagram"
           >
-            <Plus size={14} />
+            <Plus size={13} />
             <span>New Flow</span>
           </button>
         </div>
@@ -164,29 +174,33 @@ export const WorkspacePage = () => {
               <div className={styles.folderActions}>
                 <button
                   type="button"
-                  className={styles.iconBtn}
-                  onClick={() => setRenameItem({ ...currentFolder, isFolder: true })}
+                  className={styles.folderActionBtn}
+                  onClick={() => {
+                    sound.playClick();
+                    setRenameItem({ ...currentFolder, isFolder: true });
+                  }}
                   title="Rename this folder"
                   aria-label="Rename folder"
                 >
-                  <Edit2 size={15} />
+                  <Edit2 size={13} />
                 </button>
                 <button
                   type="button"
-                  className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
-                  onClick={() => setDeleteItem({ ...currentFolder, isFolder: true })}
+                  className={`${styles.folderActionBtn} ${styles.deleteFolderBtn}`}
+                  onClick={() => {
+                    sound.playClick();
+                    setDeleteItem({ ...currentFolder, isFolder: true });
+                  }}
                   title="Delete this folder"
                   aria-label="Delete folder"
                 >
-                  <Trash2 size={15} />
+                  <Trash2 size={13} />
                 </button>
               </div>
             )}
           </div>
-          <span className={styles.itemCountText}>
-            {currentSubfolders.length}{' '}
-            {currentSubfolders.length === 1 ? 'folder' : 'folders'}, {currentFlows.length}{' '}
-            {currentFlows.length === 1 ? 'flow' : 'flows'}
+          <span className="font-mono text-muted" style={{ fontSize: '11px' }}>
+            [{currentSubfolders.length} FOLDERS // {currentFlows.length} SCHEMATICS]
           </span>
         </div>
 

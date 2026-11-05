@@ -1,0 +1,112 @@
+.statusBar {
+  height: 28px;
+  width: 100vw;
+  background-color: var(--bg-surface);
+  border-top: 1px solid var(--border-default);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  user-select: none;
+  z-index: 40;
+  flex-shrink: 0;
+}
+
+.leftCluster {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.statItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.statLabel {
+  color: var(--text-faint);
+  font-weight: 600;
+  font-size: 10px;
+}
+
+.statValue {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--status-emerald);
+  box-shadow: 0 0 5px var(--status-emerald);
+}
+
+.statusDotDirty {
+  background-color: var(--status-amber);
+  box-shadow: 0 0 5px var(--status-amber);
+}
+
+.statusDotSaving {
+  background-color: var(--accent);
+  box-shadow: 0 0 5px var(--accent);
+  animation: pulseSaving 1s infinite ease-in-out;
+}
+
+@keyframes pulseSaving {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.divider {
+  width: 1px;
+  height: 14px;
+  background-color: var(--border-default);
+}
+
+.rightCluster {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.interactivePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-default);
+  background-color: var(--bg-app);
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.interactivePill:hover {
+  background-color: var(--bg-surface-hover);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.interactivePill:active {
+  transform: translateY(1px);
+}
+
+.activePill {
+  background-color: var(--accent-subtle);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
